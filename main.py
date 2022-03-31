@@ -2,38 +2,21 @@ import requests
 import csv
 
 EVENT_IDS = [
-    'xsbOt0yGXP',  # Kelowna
-    'PySHbyxn8A',  # Vancouver
-    'RyGrBVKWo4',  # Kamloops
-    'ZDaJGLBG64',  # North/West Van
-    'vkkhs06KKx',  # Valley
-    'zIc4aOSIxP',  # Victoria
-    '9ZbAyQHxzE',  # Prince George
-    'enwHPWAD7V',  # Burnaby
-    'saGwOGaurV',  # Surrey
+    '',
 ]
 
 SCORE_FIELDS = [
     "dropped",
     "numWins",
     "battlePoints",
-    "FFGBattlePointsSoS",
-    "extendedFFGBattlePointsSoS",
-    "extendedNumWinsSoS",
-    "mfStrengthOfSchedule",
-    "numWinsSoS",
-    "WHArmyPoints",
-    "marginOfVictory",
-    "mfSwissPoints",
-    "pathToVictory",
-    "record",
-    "resultRecord",
 ]
 
 AUTH = ''
+userId = ''
+
 
 def fetch_event_metadata(event_id: str):
-    url = f'https://lrs9glzzsf.execute-api.us-east-1.amazonaws.com/prod/events/{event_id}?inclPlayer=true&inclMetrics=true&userId=G571C7147U'
+    url = f'https://lrs9glzzsf.execute-api.us-east-1.amazonaws.com/prod/events/{event_id}?inclPlayer=true&inclMetrics=true&userId={userId}'
     response = requests.get(url, headers={'Authorization': AUTH})
     return response.json()
 
@@ -63,7 +46,6 @@ def wl_to_str(wl):
         return '?'
         
 
-
 def get_all_players():
     all_players = []
     for event_id in EVENT_IDS:
@@ -86,23 +68,6 @@ def get_all_players():
     return all_players
 
 
-def compute_best_in_faction(all_players, metric='numWins'):
-    factions = {}
-    for player in all_players:
-        army = player['army']
-        if army not in factions:
-            factions[army] = {'name': player['name'], metric: player[metric]}
-        if player[metric] > factions[army][metric]:
-            factions[army] = {'name': player['name'], metric: player[metric]}
-        if player[metric] == factions[army][metric]:
-            print(f'Faction tie {army} {player["name"]} {factions[army]["name"]}')
-            
-    with open('best_wins_factions.csv', 'w') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(['faction', 'name', metric])
-        for faction, p in factions.items():
-            writer.writerow([faction, p['name'], p[metric]])
-
 def main():
     all_players = get_all_players()
 
@@ -112,8 +77,7 @@ def main():
         writer.writeheader()
         for player in all_players:
             writer.writerow(player)
-
-    compute_best_in_faction(all_players)
     
 
-main()
+if __name__ == '__main__':
+    main()
