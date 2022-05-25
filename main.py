@@ -1,83 +1,72 @@
+import bcp
 import requests
-import csv
+import pygsheets
 
-EVENT_IDS = [
-    '',
-]
-
-SCORE_FIELDS = [
-    "dropped",
-    "numWins",
-    "battlePoints",
-]
-
-AUTH = ''
-userId = ''
+bcp = bcp.BcpCache()
+client = pygsheets.authorize()
 
 
-def fetch_event_metadata(event_id: str):
-    url = f'https://lrs9glzzsf.execute-api.us-east-1.amazonaws.com/prod/events/{event_id}?inclPlayer=true&inclMetrics=true&userId={userId}'
-    response = requests.get(url, headers={'Authorization': AUTH})
-    return response.json()
+def fetch_bcp_data(event_id):
+    players = bcp.fetch_players_from_event(event_id)
+    pairings = bcp.fetch_pairings_for_event(event_id)
+
+    players = sorted(players, key=lambda x: (
+        x.get('numWins', 0), x.get('battlePoints', 0)), reverse=True)
+
+    # Match up pairings with players
+    for player in players:
+        player_id = player['userId']
+        player_pairings = []
+
+        # Find pairings for player
+        for pairing in pairings:
+            if player_id == pairing.get('player1', {}).get('userId', None) or player_id == pairing.get('player2', {}).get('userId', None):
+                player_pairings.append(pairing)
+
+        player['pairings'] = sorted(player_pairings, key=lambda x: x['round'])
+
+    return players, pairings
 
 
-def fetch_players_from_region(event_id: str):
-    url = f'https://lrs9glzzsf.execute-api.us-east-1.amazonaws.com/prod/players?eventId={event_id}&inclEvent=false&inclMetrics=true&inclArmies=true&inclTeams=true&limit=500&metrics=[%22resultRecord%22,%22record%22,%22numWins%22,%22battlePoints%22,%22WHArmyPoints%22,%22numWinsSoS%22,%22FFGBattlePointsSoS%22,%22mfSwissPoints%22,%22pathToVictory%22,%22mfStrengthOfSchedule%22,%22marginOfVictory%22,%22extendedNumWinsSoS%22,%22extendedFFGBattlePointsSoS%22,%22_id%22]'
-    response = requests.get(url, headers={'Authorization': AUTH})
-    return response.json()
+def update_gsheet_with_roster(roster):
+    sheet = client.open('tyc-test')
+    worksheet = sheet.sheet1
+    updated_values = []
+    # Name	Email	Faction	Battle Points	Wins	Battle Points SoS	Wins Extended SoS	Dropped	Opponent 1	Opponent 2	Opponent 3
+    ranking = 1
+    for player in roster:
+        row = [
+            f"{player['firstName']} {player['lastName']}",
+            player.get('army', {}).get('name', 'Unknown'),
+            player.get('battlePoints', 0),
+            player.get('numWins', 0),
+            player.get('FFGBattlePointsSoS', 0),
+            player.get('extendedNumWinsSoS', 0),
+        ]
+        for pairing in player.get('pairings', []):
+            player1 = pairing.get('player1', None)
+            player2 = pairing.get('player2', None)
+            if player1 is None or player2 is None:
+                row.append('BYE')
+            elif player1.get('userId', None) == player.get('userId', None):
+                row.append(
+                    f"{player2.get('firstName', '')} {player2.get('lastName', '')}")
+            elif player2.get('userId', None) == player.get('userId', None):
+                row.append(
+                    f"{player1.get('firstName', '')} {player1.get('lastName', '')}")
+            else:
+                row.append('???')
+        updated_values.append(row)
+        ranking += 1
 
-
-def get_event_data(event_id: str):
-    print(f'Fetching {event_id}')
-    metadata = fetch_event_metadata(event_id)
-    players = fetch_players_from_region(event_id)
-
-    return metadata['name'],  players
-
-
-def wl_to_str(wl):
-    if wl == 2:
-        return 'W'
-    elif wl == 1:
-        return 'T'
-    elif wl == 0:
-        return 'L'
-    else:
-        return '?'
-        
-
-def get_all_players():
-    all_players = []
-    for event_id in EVENT_IDS:
-        event_name, players = get_event_data(event_id)
-        for player in players:
-            # if player['dropped']:
-            #     continue
-            player_out = {
-                'name': player['firstName'] + ' ' + player['lastName'],
-                'region': event_name,
-                'army': player['army']['name'],
-            }
-            for f in SCORE_FIELDS:
-                if f == 'resultRecord':
-                    player_out[f] = ''.join([wl_to_str(i) for i in player.get(f)])
-                else:
-                    player_out[f] = player.get(f)
-            all_players.append(player_out)
-
-    return all_players
+    worksheet.update_values('A2', updated_values)
 
 
 def main():
-    all_players = get_all_players()
+    event_id = '1iLGr2qqR3'
+    players, pairings = fetch_bcp_data(event_id)
+    print(f'Got {len(players)} players')
+    update_gsheet_with_roster(players)
 
-    with open('players.csv', 'w') as csvfile:
-        fieldnames = all_players[0].keys()
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-        for player in all_players:
-            writer.writerow(player)
-    
 
-if __name__ == '__main__':
-    main()
+main()
