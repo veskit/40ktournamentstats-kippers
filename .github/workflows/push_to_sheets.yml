@@ -1,10 +1,33 @@
 name: Push to Gsheets
 
+on:
+  workflow_dispatch:
+    inputs:
+      event_id:
+        required: false
+        type: string
+
 jobs:
   push_to_gsheets:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10"]
+
     steps:
-      - env:
-        GSHEETS_SERVICE_ACCOUNT: ${{ secrets.GSHEETS_SECRET }}
-      run: |
-        python main.py
+      - uses: actions/checkout@v3
+      - name: Setup python
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Push data to gsheets
+        env:
+          GSHEETS_SERVICE_ACCOUNT: ${{ secrets.GSHEETS_SECRET }}
+        run: |
+          python main.py
