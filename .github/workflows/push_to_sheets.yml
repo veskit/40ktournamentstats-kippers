@@ -1,0 +1,10 @@
+name: Push to Gsheets
+
+jobs:
+  push_to_gsheets:
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+        GSHEETS_SERVICE_ACCOUNT: ${{ secrets.GSHEETS_SECRET }}
+      run: |
+        python main.py

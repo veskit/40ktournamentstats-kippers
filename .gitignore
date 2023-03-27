@@ -130,3 +130,8 @@ dmypy.json
 
 client_secret.json
 sheets.googleapis.com-python.json
+lists_cache
+.vscode
+diffs.json
+players.csv
+service_account.json
