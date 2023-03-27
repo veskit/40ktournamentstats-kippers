@@ -1,9 +1,11 @@
 import os
 import bcp
+import sys
 import pygsheets
 
 bcp = bcp.BcpCache()
 client = pygsheets.authorize(service_account_env_var="GSHEETS_SERVICE_ACCOUNT")
+# client = pygsheets.authorize(service_account_file="service_account.json")
 
 
 def fetch_bcp_data(event_id):
@@ -71,11 +73,12 @@ def update_gsheet_with_roster(roster):
     worksheet.update_values("A2", updated_values)
 
 
-def main():
-    event_id = "ipqL1rmDYd"
+def main(event_id):
     players, pairings = fetch_bcp_data(event_id)
     print(f"Got {len(players)} players")
     update_gsheet_with_roster(players)
 
 
-main()
+if __name__ == "__main__":
+    event_id = sys.argv[1]
+    main(event_id)

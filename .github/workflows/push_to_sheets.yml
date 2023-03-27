@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       event_id:
-        required: false
+        required: true
         type: string
 
 jobs:
@@ -29,5 +29,6 @@ jobs:
       - name: Push data to gsheets
         env:
           GSHEETS_SERVICE_ACCOUNT: ${{ secrets.GSHEETS_SECRET }}
+          SHEET_URL: ${{ secrets.SHEET_URL }}
         run: |
-          python main.py
+          python main.py ${{ inputs.event_id }}
