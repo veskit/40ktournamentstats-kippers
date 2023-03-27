@@ -1,5 +1,5 @@
+import os
 import bcp
-import requests
 import pygsheets
 
 bcp = bcp.BcpCache()
@@ -34,7 +34,9 @@ def fetch_bcp_data(event_id):
 
 
 def update_gsheet_with_roster(roster):
-    sheet = client.open("tyc-test")
+    sheet = client.open_by_url(
+        f"https://docs.google.com/spreadsheets/d/{os.env['SHEET_URL']}/edit?usp=sharing"
+    )
     worksheet = sheet.sheet1
     updated_values = []
     # Name	Email	Faction	Battle Points	Wins	Battle Points SoS	Wins Extended SoS	Dropped	Opponent 1	Opponent 2	Opponent 3
