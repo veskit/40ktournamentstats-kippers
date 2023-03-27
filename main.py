@@ -35,7 +35,7 @@ def fetch_bcp_data(event_id):
 
 def update_gsheet_with_roster(roster):
     sheet = client.open_by_url(
-        f"https://docs.google.com/spreadsheets/d/{os.env['SHEET_URL']}/edit?usp=sharing"
+        f"https://docs.google.com/spreadsheets/d/{os.environv['SHEET_URL']}/edit?usp=sharing"
     )
     worksheet = sheet.sheet1
     updated_values = []
