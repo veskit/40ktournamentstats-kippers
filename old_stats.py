@@ -14,7 +14,7 @@ SCORE_FIELDS = [
     "battlePoints",
 ]
 
-AUTH = "AIzaSyAasA1sEimSfnHxOEcgEkRpXI9yoh1paWU"
+AUTH = ""
 userId = ""
 
 bcp = bcp.BcpCache()
