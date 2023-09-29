@@ -3,7 +3,8 @@ import csv
 import bcp
 
 EVENT_IDS = [
-    "A6IlTb3bxD",  # Seattle open
+    "7qsyCj6xKp", # Kippers Melee
+    # "A6IlTb3bxD",  # Seattle open
     # 'PzYQG9wJXA', # Dallas open
 ]
 
@@ -13,7 +14,7 @@ SCORE_FIELDS = [
     "battlePoints",
 ]
 
-AUTH = ""
+AUTH = "AIzaSyAasA1sEimSfnHxOEcgEkRpXI9yoh1paWU"
 userId = ""
 
 bcp = bcp.BcpCache()
